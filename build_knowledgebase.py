@@ -59,6 +59,13 @@ def build_knowledgebase(
     from langchain_huggingface import HuggingFaceEmbeddings
     from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be greater than 0.")
+    if chunk_overlap < 0:
+        raise ValueError("chunk_overlap must be greater than or equal to 0.")
+    if chunk_overlap >= chunk_size:
+        raise ValueError("chunk_overlap must be less than chunk_size.")
+
     documents = read_documents(data_path)
 
     splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
