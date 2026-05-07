@@ -62,7 +62,7 @@ def build_knowledgebase(
     if chunk_size <= 0:
         raise ValueError("chunk_size must be greater than 0.")
     if chunk_overlap < 0:
-        raise ValueError("chunk_overlap must be greater than or equal to 0.")
+        raise ValueError("chunk_overlap must be non-negative.")
     if chunk_overlap >= chunk_size:
         raise ValueError("chunk_overlap must be less than chunk_size.")
 
