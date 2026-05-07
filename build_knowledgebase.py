@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from langchain_core.documents import Document
 
 
 SUPPORTED_EXTENSIONS = {".txt", ".md", ".rst", ".html"}
@@ -22,7 +26,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def read_documents(data_path: str):
+def read_documents(data_path: str) -> list[Document]:
     from langchain_core.documents import Document
 
     path = Path(data_path)
@@ -32,7 +36,7 @@ def read_documents(data_path: str):
     documents = []
     for file_path in sorted(path.rglob("*")):
         if file_path.is_file() and file_path.suffix.lower() in SUPPORTED_EXTENSIONS:
-            text = file_path.read_text(encoding="utf-8", errors="ignore").strip()
+            text = file_path.read_text(encoding="utf-8", errors="replace").strip()
             if text:
                 documents.append(Document(page_content=text, metadata={"source": str(file_path)}))
 
@@ -61,8 +65,14 @@ def build_knowledgebase(
     chunks = splitter.split_documents(documents)
 
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
-    store = ElasticsearchStore(es_url=elasticsearch_url, index_name=index_name, embedding=embeddings)
-    store.add_documents(chunks)
+    try:
+        store = ElasticsearchStore(es_url=elasticsearch_url, index_name=index_name, embedding=embeddings)
+        store.add_documents(chunks)
+    except Exception as exc:
+        raise RuntimeError(
+            f"Failed to index documents into Elasticsearch at {elasticsearch_url}. "
+            "Ensure Elasticsearch is running and reachable."
+        ) from exc
     return len(documents), len(chunks)
 
 
